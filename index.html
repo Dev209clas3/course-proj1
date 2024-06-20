@@ -7,7 +7,74 @@
   <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css" /> 
   <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
   <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
-  <script src="js/app.js"></script>
+  <script>
+    $(document).on('pageinit', '#bookList', function() {
+      loadBooks();
+    });
+
+    $(document).on('pagebeforeshow', '#bookDetails', function() {
+      var bookTitle = sessionStorage.getItem('selectedBookTitle');
+      if (bookTitle) {
+        loadBookDetails(bookTitle);
+      }
+    });
+
+    $(document).on('submit', '#addBookForm', function(event) {
+      event.preventDefault();
+      var book = {
+        title: $('#bookTitle').val(),
+        author: $('#bookAuthor').val(),
+        progress: $('#bookProgress').val()
+      };
+      addBook(book);
+    });
+
+    $(document).on('submit', '#editProgressForm', function(event) {
+      event.preventDefault();
+      var bookTitle = sessionStorage.getItem('selectedBookTitle');
+      var newProgress = $('#editProgress').val();
+      updateBookProgress(bookTitle, newProgress);
+    });
+
+    function loadBooks() {
+      $.get('/books', function(data) {
+        $('#bookListView').empty();
+        data.forEach(function(book) {
+          $('#bookListView').append(
+            '<li><a href="#bookDetails" onclick="selectBook(\'' + book.title + '\')">' +
+            book.title + '</a></li>'
+          );
+        });
+        $('#bookListView').listview('refresh');
+      });
+    }
+
+    function addBook(book) {
+      $.post('/books', book, function() {
+        $.mobile.changePage('#bookList');
+        loadBooks();
+      });
+    }
+
+    function loadBookDetails(title) {
+      $.get('/books/' + title, function(book) {
+        $('#detailsTitle').text(book.title);
+        $('#detailsAuthor').text('Author: ' + book.author);
+        $('#detailsProgress').text('Progress: ' + book.progress + '%');
+        $('#editProgress').val(book.progress);
+      });
+    }
+
+    function updateBookProgress(title, progress) {
+      $.post('/books/updateProgress', { title: title, progress: progress }, function() {
+        loadBookDetails(title);
+      });
+    }
+
+    function selectBook(title) {
+      sessionStorage.setItem('selectedBookTitle', title);
+    }
+  </script>
 </head>
 <body>
   <!-- Welcome Page -->
@@ -66,7 +133,13 @@
       <h2 id="detailsTitle"></h2>
       <p id="detailsAuthor"></p>
       <p id="detailsProgress"></p>
+      <form id="editProgressForm">
+        <label for="editProgress">Edit Progress (%):</label>
+        <input type="number" name="editProgress" id="editProgress" min="0" max="100" required>
+        <input type="submit" value="Update Progress">
+      </form>
     </div>
   </div>
 </body>
 </html>
+
