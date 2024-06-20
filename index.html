@@ -37,38 +37,57 @@
     });
 
     function loadBooks() {
-      $.get('/books', function(data) {
-        $('#bookListView').empty();
-        data.forEach(function(book) {
-          $('#bookListView').append(
-            '<li><a href="#bookDetails" onclick="selectBook(\'' + book.title + '\')">' +
-            book.title + '</a></li>'
-          );
+      $.get('/books')
+        .done(function(data) {
+          $('#bookListView').empty();
+          data.forEach(function(book) {
+            $('#bookListView').append(
+              '<li><a href="#bookDetails" onclick="selectBook(\'' + book.title + '\')">' +
+              book.title + '</a></li>'
+            );
+          });
+          $('#bookListView').listview('refresh');
+        })
+        .fail(function() {
+          alert('Error loading books. Please try again later.');
         });
-        $('#bookListView').listview('refresh');
-      });
     }
 
     function addBook(book) {
-      $.post('/books', book, function() {
-        $.mobile.changePage('#bookList');
-        loadBooks();
-      });
+      console.log('Attempting to add book:', book);
+      $.post('/books', book)
+        .done(function() {
+          console.log('Book added successfully');
+          $.mobile.changePage('#bookList');
+          loadBooks();
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+          console.error('Error adding book:', textStatus, errorThrown);
+          alert('Error adding book. Please try again later.');
+        });
     }
 
     function loadBookDetails(title) {
-      $.get('/books/' + title, function(book) {
-        $('#detailsTitle').text(book.title);
-        $('#detailsAuthor').text('Author: ' + book.author);
-        $('#detailsProgress').text('Progress: ' + book.progress + '%');
-        $('#editProgress').val(book.progress);
-      });
+      $.get('/books/' + title)
+        .done(function(book) {
+          $('#detailsTitle').text(book.title);
+          $('#detailsAuthor').text('Author: ' + book.author);
+          $('#detailsProgress').text('Progress: ' + book.progress + '%');
+          $('#editProgress').val(book.progress);
+        })
+        .fail(function() {
+          alert('Error loading book details. Please try again later.');
+        });
     }
 
     function updateBookProgress(title, progress) {
-      $.post('/books/updateProgress', { title: title, progress: progress }, function() {
-        loadBookDetails(title);
-      });
+      $.post('/books/updateProgress', { title: title, progress: progress })
+        .done(function() {
+          loadBookDetails(title);
+        })
+        .fail(function() {
+          alert('Error updating book progress. Please try again later.');
+        });
     }
 
     function selectBook(title) {
@@ -142,4 +161,3 @@
   </div>
 </body>
 </html>
-
