@@ -37,7 +37,7 @@
     });
 
     function loadBooks() {
-      $.get('/books')
+      $.get('http://localhost:3000/books')
         .done(function(data) {
           $('#bookListView').empty();
           data.forEach(function(book) {
@@ -55,20 +55,26 @@
 
     function addBook(book) {
       console.log('Attempting to add book:', book);
-      $.post('/books', book)
-        .done(function() {
+      $.ajax({
+        url: 'http://localhost:3000/books',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(book),
+        success: function() {
           console.log('Book added successfully');
           $.mobile.changePage('#bookList');
           loadBooks();
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
           console.error('Error adding book:', textStatus, errorThrown);
+          console.error('Response:', jqXHR.responseText);
           alert('Error adding book. Please try again later.');
-        });
+        }
+      });
     }
 
     function loadBookDetails(title) {
-      $.get('/books/' + title)
+      $.get('http://localhost:3000/books/' + title)
         .done(function(book) {
           $('#detailsTitle').text(book.title);
           $('#detailsAuthor').text('Author: ' + book.author);
@@ -81,13 +87,18 @@
     }
 
     function updateBookProgress(title, progress) {
-      $.post('/books/updateProgress', { title: title, progress: progress })
-        .done(function() {
+      $.ajax({
+        url: 'http://localhost:3000/books/updateProgress',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ title: title, progress: progress }),
+        success: function() {
           loadBookDetails(title);
-        })
-        .fail(function() {
+        },
+        error: function() {
           alert('Error updating book progress. Please try again later.');
-        });
+        }
+      });
     }
 
     function selectBook(title) {
@@ -132,11 +143,11 @@
       <h2>Add a New Book</h2>
       <form id="addBookForm">
         <label for="bookTitle">Title:</label>
-        <input type="text" name="bookTitle" id="bookTitle" required >
+        <input type="text" name="bookTitle" id="bookTitle" required>
         <label for="bookAuthor">Author:</label>
-        <input type="text" name="bookAuthor" id="bookAuthor" required >
+        <input type="text" name="bookAuthor" id="bookAuthor" required>
         <label for="bookProgress">Progress (%):</label>
-        <input type="number" name="bookProgress" id="bookProgress" min="0" max="100" required >
+        <input type="number" name="bookProgress" id="bookProgress" min="0" max="100" required>
         <input type="submit" value="Add Book">
       </form>
     </div>
@@ -161,3 +172,4 @@
   </div>
 </body>
 </html>
+
